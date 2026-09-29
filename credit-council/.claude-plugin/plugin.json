@@ -1,0 +1,9 @@
+{
+  "name": "credit-council",
+  "version": "0.1.0",
+  "description": "A three-agent council (Steelman, Challenger, Arbiter) that stress-tests a credit view or investment decision from opposing sides before reaching a verdict.",
+  "author": {
+    "name": "qguimb"
+  },
+  "keywords": ["credit", "council", "debate", "decision", "sub-agents"]
+}
