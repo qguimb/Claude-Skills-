@@ -48,7 +48,7 @@ From that folder, start Claude Code with the plugin loaded and run:
 ```
 Council these catalysts for [ISSUER] on a 12-month view.
 Catalysts: @catalysts.md
-Evidence: @annual-report-2025.pdf
+Evidence: annual-report-2025.pdf (in this folder)
 For each catalyst, tell me whether to keep, recalibrate or replace it.
 ```
 
