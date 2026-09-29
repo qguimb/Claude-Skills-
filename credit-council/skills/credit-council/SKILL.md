@@ -51,7 +51,7 @@ Give both debaters identical inputs. Do not include your own opinion.
 
 **With sub-agents available (Claude Code, Cowork):** launch the `steelman` and `challenger` agents from this plugin **in the same turn, in parallel**. (In Claude Code they may appear namespaced as `credit-council:steelman` and `credit-council:challenger`.) Pass each the brief pack from Step 2 and nothing else.
 
-**Without sub-agents (plain chat):** play each role yourself, one at a time. Write the Challenger brief first, then the Steelman brief. Follow each agent file's instructions and output format exactly. Do not let the second brief respond to the first.
+**Without sub-agents (plain chat):** play each role yourself, one at a time. Write the Challenger brief first, then the Steelman brief. Follow each role's instructions and output format exactly. They are in `agents/<role>.md` in the plugin, or in `roles/<role>.md` next to this file when the skill was uploaded on its own. Do not let the second brief respond to the first.
 
 ## Step 4: Run the Arbiter
 
@@ -71,7 +71,7 @@ CHALLENGER BRIEF:
 
 Pass the briefs verbatim. Do not summarise or edit them, since the Arbiter has to judge the arguments as written.
 
-Without sub-agents, write the Arbiter verdict yourself following `agents/arbiter.md`, and make a genuine effort to judge rather than average.
+Without sub-agents, write the Arbiter verdict yourself following the Arbiter role file (`agents/arbiter.md` or `roles/arbiter.md`), and make a genuine effort to judge rather than average.
 
 ## Step 5: Report to the user
 

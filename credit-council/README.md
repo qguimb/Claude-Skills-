@@ -33,6 +33,10 @@ credit-council/
 
 ## Try it
 
+**Claude chat (e.g. inside a Project):** upload `credit-council-skill.zip` in Settings → Capabilities → Skills. Then, in a chat inside your Project, write "Council this: [position]". The skill reads the Project's files as context. In chat the three roles usually run one after another in the same conversation rather than as separate agents (see the note below). Run `./build-chat-skill.sh` to rebuild the zip after editing the agent or skill files.
+
+> Independence note: in chat, the Steelman is written after the Challenger in the same context, so it is not fully blind. Claude Code and Cowork run the roles as separate sub-agents, which keeps them independent.
+
 **Claude Code (most control):**
 
 ```bash
