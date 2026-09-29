@@ -32,3 +32,28 @@ What to check: figures in all three outputs trace back to the attached documents
 ## Test 3: compare with a single-prompt answer
 
 Ask the same Test 1 question in a fresh chat without the council ("Will this company keep its BBB rating?"). Compare the two answers. Does the council's answer surface risks or conditions that the single answer missed? This is the real test of whether the extra usage is worth it.
+
+## Test 4: your own catalysts against an annual report (Claude Code)
+
+Put the files in a working folder outside this repo, for example:
+
+```
+~/credit/ISSUER/
+├── annual-report-2025.pdf
+└── catalysts.md        # your three catalysts, numbered 1-3
+```
+
+From that folder, start Claude Code with the plugin loaded and run:
+
+```
+Council these catalysts for [ISSUER] on a 12-month view.
+Catalysts: @catalysts.md
+Evidence: @annual-report-2025.pdf
+For each catalyst, tell me whether to keep, recalibrate or replace it.
+```
+
+What to check:
+- The orchestrator builds a Document map (page ranges per topic) before launching the agents.
+- Every figure in the briefs cites a page number.
+- The Arbiter gives a Keep / Recalibrate / Replace verdict per catalyst and rewrites any it changes.
+- Whether the Challenger proposes a "Missing catalyst", and whether the Arbiter accepts it.

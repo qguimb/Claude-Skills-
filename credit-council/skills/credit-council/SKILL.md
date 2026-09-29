@@ -32,6 +32,8 @@ Minimum context before you convene:
 2. **The horizon**: when the view should be judged (default: 12 months, and say so).
 3. **The evidence**: documents, figures, or at least the issuer name so the members can research.
 
+**Catalyst mode.** If the user supplies a set of catalysts or theses (typically three) rather than one view, the position becomes: "These catalysts are the right drivers of [issuer]'s credit over [horizon], and each is correctly calibrated (direction, figures, what to watch)." Number the catalysts C1, C2, C3 and keep the user's wording verbatim in the brief pack. The debaters then argue catalyst by catalyst, and the Challenger may also argue that a catalyst is missing or should be replaced.
+
 Scan the conversation and any attached files first. Ask the user only for what is missing, one question at a time. If everything is available, do not ask. State the framed position back to the user in one line and proceed.
 
 ## Step 2: Build the brief pack
@@ -46,6 +48,18 @@ CONTEXT:
 ```
 
 Give both debaters identical inputs. Do not include your own opinion.
+
+**Long documents (annual reports, OMs).** Do not make every agent read a 200-page PDF. Before building the pack, do one pass yourself: read the table of contents, then locate the sections that bear on the position (for catalyst mode, the sections behind each catalyst, plus the debt note, liquidity and maturity profile, cash flow statement, and any guidance or outlook section). Add a **Document map** to the pack listing the file path and page ranges per topic, for example:
+
+```
+DOCUMENT MAP (annual-report-2025.pdf)
+- Debt & maturities: pp. 212-219
+- Cash flow statement: p. 168
+- Outlook / guidance: pp. 14-16
+- C2 (development pipeline): pp. 42-51
+```
+
+Tell the agents to read these pages first and to cite page numbers for every figure. They can read other pages if they need to. Build the map from the document's structure, not from your view of the credit, so it does not favour either side.
 
 ## Step 3: Run the debate (parallel)
 
