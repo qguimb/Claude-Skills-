@@ -89,6 +89,19 @@ body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(
 .results { font: 500 18px/1.6 var(--body); }
 .results .big { font: 400 clamp(30px, 6vw, 52px)/1 var(--display); color: var(--sun); margin: 6px 0 10px; font-variant-numeric: tabular-nums; }
 #touch-note, #load-status.err { color: var(--hot); }
+#game { touch-action: none; }
+.tb { pointer-events: auto; touch-action: none; border: 0; border-radius: 12px; background: rgba(22,15,36,.55); color: var(--cream); font: 400 12px/1 var(--display); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+.tb.on { background: var(--sun); color: var(--ink); }
+#touch .pad { position: fixed; left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: 150px; height: 150px; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); gap: 4px; }
+#touch .pad .up { grid-area: 1 / 2; } #touch .pad .left { grid-area: 2 / 1; } #touch .pad .right { grid-area: 2 / 3; } #touch .pad .down { grid-area: 3 / 2; }
+#touch .pad .tb { font-size: 18px; }
+#touch .acts { position: fixed; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(2, 56px); gap: 8px; }
+#touch .acts .big { grid-column: 3; grid-row: 1 / span 2; background: rgba(255,138,31,.75); color: var(--ink); font-size: 14px; }
+#touch .pausebtn { position: fixed; top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: 44px; height: 44px; }
+body.touch #hud-combo { bottom: calc(176px + env(safe-area-inset-bottom, 0px)); }
+body.touch #hud-special { top: calc(64px + env(safe-area-inset-top, 0px)); bottom: auto; width: min(40vw, 260px); }
+body.touch #hud-goals { display: none; }
+body.touch #hud-speed, body.touch #hud-keys { display: none !important; }
 #load-status { color: var(--dim); }
 @media (max-width: 640px) { #hud-goals, #hud-keys { display: none; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation-duration: 2.2s; } .panel h1 { transform: none; } }
@@ -122,6 +135,22 @@ body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(
   <kbd>J</kbd> flip · <kbd>K</kbd> grab · <kbd>L</kbd> grind · <kbd>I</kbd> manual<br>
   <kbd>H</kbd> hide · <kbd>P</kbd> pause · <kbd>M</kbd> music · <kbd>R</kbd> reset
 </div>
+<div class="hud" id="touch" hidden>
+  <div class="pad">
+    <button class="tb up" data-act="up" aria-label="Push">▲</button>
+    <button class="tb left" data-act="left" aria-label="Left">◀</button>
+    <button class="tb right" data-act="right" aria-label="Right">▶</button>
+    <button class="tb down" data-act="down" aria-label="Brake">▼</button>
+  </div>
+  <div class="acts">
+    <button class="tb" data-act="flip">Flip</button>
+    <button class="tb" data-act="grab">Grab</button>
+    <button class="tb" data-act="grind">Grind</button>
+    <button class="tb" data-act="manual">Manual</button>
+    <button class="tb big" data-act="ollie">Ollie</button>
+  </div>
+  <button class="tb pausebtn" data-act="pause" aria-label="Pause">II</button>
+</div>
 <div class="hud" id="hud-speed" hidden><span id="speed-val">0</span> <small>KM/H</small></div>
 
 <div class="overlay" id="menu">
@@ -133,7 +162,7 @@ body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(
       <button class="btn alt" id="btn-free">Free Skate</button>
     </div>
     <p id="load-status">Loading the park…</p>
-    <p id="touch-note" hidden>This game needs a keyboard. Plug one in or play on a computer.</p>
+    <p id="touch-note" hidden>On a touch screen, use the on-screen pad and buttons. Hold a direction while tapping a trick button for variations.</p>
     <div class="ctrls">
       <div><b>Arrows / WASD</b><br>push, brake, turn; spin in the air</div>
       <div><b>Space</b><br>hold to crouch, release to ollie (longer = higher)</div>

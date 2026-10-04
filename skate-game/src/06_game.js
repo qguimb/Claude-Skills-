@@ -95,7 +95,7 @@ const ui = {
     const html = GOALS.map(g => `<div class="g${game.done.has(g.id) ? ' done' : ''}"><b>${game.done.has(g.id) ? '✓' : '·'}</b><span>${g.text}</span></div>`).join('');
     $('hud-goals').innerHTML = html; $('pause-goals').innerHTML = html;
   },
-  showHud(on) { for (const id of ['hud-score', 'hud-right', 'hud-combo', 'hud-special', 'hud-speed']) $(id).hidden = !on; $('hud-keys').hidden = !on || !game.showKeys; },
+  showHud(on) { for (const id of ['hud-score', 'hud-right', 'hud-combo', 'hud-special', 'hud-speed']) $(id).hidden = !on; $('hud-keys').hidden = !on || !game.showKeys; $('touch').hidden = !on || !IS_TOUCH; },
 };
 
 // ---------------------------------------------------------------------------
@@ -285,6 +285,26 @@ function frame(t) {
   renderer.render(scene, camera);
 }
 
+// ---------------------------------------------------------------------------
+// On-screen controls for touch screens: they feed the same input queue as the keyboard
+// ---------------------------------------------------------------------------
+const IS_TOUCH = matchMedia('(pointer: coarse)').matches;
+function virtualKey(a, down) {
+  if (down) { if (input.held[a]) return; input.held[a] = true; input.queue.push({ a, dir: input.dirName() }); }
+  else { if (!input.held[a]) return; input.held[a] = false; input.queue.push({ a, up: true }); }
+}
+function initTouch() {
+  if (!IS_TOUCH) return;
+  document.body.classList.add('touch');
+  for (const b of document.querySelectorAll('#touch .tb')) {
+    const a = b.dataset.act;
+    const up = () => { if (!b.classList.contains('on')) return; b.classList.remove('on'); virtualKey(a, false); };
+    b.addEventListener('pointerdown', (ev) => { ev.preventDefault(); try { b.setPointerCapture(ev.pointerId); } catch (e) { /* older browsers */ } b.classList.add('on'); virtualKey(a, true); });
+    for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(t, up);
+    b.addEventListener('contextmenu', (ev) => ev.preventDefault());
+  }
+}
+
 async function boot() {
   try {
     await Promise.race([
@@ -295,9 +315,11 @@ async function boot() {
   buildPark();
   fx.init();
   rig = createSkater();
+  if (!renderer) renderer = createSoftRenderer(container, rig.root);
   resetSkater();
+  initTouch();
   ui.goals();
-  if (matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches) $('touch-note').hidden = false;
+  if (IS_TOUCH) $('touch-note').hidden = false;
   $('btn-run').onclick = () => game.start('run');
   $('btn-free').onclick = () => game.start('free');
   $('btn-resume').onclick = () => game.pause(false);
@@ -307,7 +329,7 @@ async function boot() {
   $('btn-run').focus();
   // test hook: advance the simulation deterministically
   window.__skateReady = true;
-  window.__skateStatus('');
+  window.__skateStatus(LOW ? "Low-detail mode: this browser can't use 3D graphics acceleration (WebGL), so the park is drawn without textures or shadows. Turn on hardware acceleration in your browser settings for the full version." : '');
   window.__skate = { sk, world, game, combo, input, rig: () => rig, special: () => special,
     step(n) { for (let i = 0; i < n; i++) { clockNow += STEP; handleInput(); physicsStep(STEP); } },
     key(a, down, dir = 'none') { input.held[a] = down; input.queue.push(down ? { a, dir } : { a, up: true }); } };

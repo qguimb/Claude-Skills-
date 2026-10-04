@@ -13,7 +13,7 @@ mkdir -p dist
   echo '(function () {'
   echo 'function main() {'
   echo "'use strict';"
-  cat src/01_core.js src/02_textures.js src/03_world.js src/04_skater.js src/05_physics.js src/06_game.js
+  cat src/01_core.js src/02_textures.js src/03_world.js src/04_skater.js src/05_physics.js src/05b_softrender.js src/06_game.js
   echo '}'
   cat <<'JS'
 function fail() { window.__skateStatus('Could not download the 3D engine (three.js) from cdn.jsdelivr.net or unpkg.com. Check your connection or ad blocker, then reload the page.', true); }

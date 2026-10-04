@@ -2,22 +2,34 @@
 // Renderer, scene, sky, lights
 // ---------------------------------------------------------------------------
 const container = document.getElementById('game');
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-container.appendChild(renderer.domElement);
+// WebGL with progressively safer settings. Without it (GPU blocked or acceleration off) the
+// game draws with the 2D-canvas fallback in 05b_softrender.js; #lowfi forces that mode.
+function makeWebGL() {
+  if (location.hash === '#lowfi') return null;
+  for (const opts of [{ antialias: true, powerPreference: 'high-performance' }, { antialias: false }, { antialias: false, powerPreference: 'low-power', precision: 'mediump' }]) {
+    try { return new THREE.WebGLRenderer(opts); } catch (e) { console.warn('WebGL unavailable with', opts, e.message); }
+  }
+  return null;
+}
+let renderer = makeWebGL();
+const LOW = !renderer;
+if (renderer) {
+  renderer.setPixelRatio(Math.min(devicePixelRatio, matchMedia('(pointer: coarse)').matches ? 1.5 : 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  container.appendChild(renderer.domElement);
+}
 
 const scene = new THREE.Scene();
 const FOG = new THREE.Color('#d9926e');
 scene.fog = new THREE.Fog(FOG, 70, 290);
 const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.1, 900);
 addEventListener('resize', () => {
-  renderer.setSize(innerWidth, innerHeight);
+  if (renderer && renderer.setSize) renderer.setSize(innerWidth, innerHeight);
   camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
 });
 
@@ -58,6 +70,7 @@ const sky = new THREE.Mesh(
   })
 );
 sky.renderOrder = -1;
+sky.userData.skip = true;
 scene.add(sky);
 
 const hemi = new THREE.HemisphereLight('#ffc9a0', '#5a3f5e', 1.15);
@@ -177,12 +190,12 @@ class Transition extends Oriented {
     } else if (d <= this.dLip + this.D) setOut(out, this.hLip, 0, 1, 0, this.surf, this);
   }
   build(o) {
-    const g = this.group(), N = 28, W = this.W, R = this.R, A = this.A;
+    const g = this.group(), N = LOW ? 10 : 28, W = this.W, R = this.R, A = this.A, M = LOW ? Math.ceil(W / 4) : 1;
     const pos = [], nor = [], uv = [], idx = [];
     for (let i = 0; i <= N; i++) {
       const t = A * i / N, d = R * Math.sin(t), h = R * (1 - Math.cos(t));
-      for (const w of [-W / 2, W / 2]) { pos.push(d, h, w); nor.push(-Math.sin(t), Math.cos(t), 0); uv.push(w / 1.22, R * t / 1.22); }
-      if (i < N) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 2, a + 1, a + 3); }
+      for (let j = 0; j <= M; j++) { const w = -W / 2 + W * j / M; pos.push(d, h, w); nor.push(-Math.sin(t), Math.cos(t), 0); uv.push(w / 1.22, R * t / 1.22); }
+      if (i < N) for (let j = 0; j < M; j++) { const a = i * (M + 1) + j, c = a + M + 1; idx.push(a, a + 1, c, c, a + 1, c + 1); }
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
@@ -198,13 +211,13 @@ class Transition extends Oriented {
     addMesh(sg, side, g).position.z = W / 2;
     addMesh(sg, side, g).position.z = -W / 2;
     if (this.D > 0) {
-      const deck = addMesh(uvScale(new THREE.BoxGeometry(this.D, this.hLip, W), 1, W / 1.22), MAT.wood, g);
+      const deck = addMesh(uvScale(new THREE.BoxGeometry(this.D, this.hLip, W, 1, 1, LOW ? Math.ceil(W / 4) : 1), 1, W / 1.22), MAT.wood, g);
       deck.position.set(this.dLip + this.D / 2, this.hLip / 2, 0);
     } else {
       addMesh(new THREE.BoxGeometry(0.05, this.hLip, W), side, g).position.set(this.dLip - 0.025, this.hLip / 2, 0);
     }
     if (o.coping !== false && this.D > 0) {
-      const cop = addMesh(new THREE.CylinderGeometry(0.045, 0.045, W, 10), MAT.metal, g);
+      const cop = addMesh(new THREE.CylinderGeometry(0.045, 0.045, W, LOW ? 4 : 10, LOW ? Math.ceil(W / 4) : 1), MAT.metal, g);
       cop.rotation.x = Math.PI / 2; cop.position.set(this.dLip, this.hLip, 0);
       addRail(this.world(this.dLip - 0.02, -W / 2 + 0.2, this.hLip + 0.03), this.world(this.dLip - 0.02, W / 2 - 0.2, this.hLip + 0.03), 'coping',
         { outward: new THREE.Vector3(-this.fx, 0, -this.fz), name: o.copingName || 'Coping' });
@@ -241,7 +254,7 @@ class Bank extends Oriented {
     } else {
       const len = Math.hypot(L, H);
       const tile = this.surf === 'wood' ? 1.22 : 4;
-      const geo = uvScale(new THREE.PlaneGeometry(len, W), len / tile, W / tile);
+      const geo = uvScale(LOW ? new THREE.PlaneGeometry(len, W, Math.ceil(len / 3), Math.ceil(W / 3)) : new THREE.PlaneGeometry(len, W), len / tile, W / tile);
       geo.rotateX(-Math.PI / 2); geo.rotateZ(Math.atan2(H, L));
       addMesh(geo, mat, g).position.set(L / 2, H / 2, 0);
       const shape = new THREE.Shape(); shape.moveTo(0, 0); shape.lineTo(L, H); shape.lineTo(L + this.D, H); shape.lineTo(L + this.D, 0); shape.closePath();
@@ -332,14 +345,14 @@ class Funbox {
 function pipeRail(a, b, mat, name) {
   const r = addRail(a.clone().setY(a.y + 0.035), b.clone().setY(b.y + 0.035), 'rail', { name });
   const mid = a.clone().lerp(b, 0.5);
-  const pipe = addMesh(new THREE.CylinderGeometry(0.035, 0.035, r.len, 10), mat);
+  const pipe = addMesh(new THREE.CylinderGeometry(0.035, 0.035, r.len, LOW ? 4 : 10, LOW ? Math.ceil(r.len / 3) : 1), mat);
   pipe.position.copy(mid);
   pipe.quaternion.setFromUnitVectors(UP, r.dir);
   const n = Math.max(2, Math.ceil(r.len / 3) + 1);
   for (let i = 0; i < n; i++) {
     const p = a.clone().lerp(b, i / (n - 1));
     const base = heightAt(p.x, p.z), hgt = p.y - base;
-    const post = addMesh(new THREE.CylinderGeometry(0.03, 0.03, hgt, 8), mat);
+    const post = addMesh(new THREE.CylinderGeometry(0.03, 0.03, hgt, LOW ? 4 : 8), mat);
     post.position.set(p.x, base + hgt / 2, p.z);
   }
   return r;
@@ -350,12 +363,12 @@ function buildPark() {
   const H = world.half;
   // ground: textured slab inside, asphalt lot beyond
   const ground = addMesh(new THREE.PlaneGeometry(H * 2, H * 2), MAT.concrete, scene, false, true);
-  ground.rotation.x = -Math.PI / 2;
+  ground.rotation.x = -Math.PI / 2; ground.userData.floor = true;
   TEX.concrete.repeat.set(H * 2 / 4, H * 2 / 4);
   const lot = addMesh(new THREE.RingGeometry(H * 1.42, 700, 4, 1, Math.PI / 4), MAT.asphalt, scene, false, true);
-  lot.rotation.x = -Math.PI / 2; lot.position.y = -0.01;
+  lot.rotation.x = -Math.PI / 2; lot.position.y = -0.01; lot.userData.floor = true;
   const lot2 = addMesh(new THREE.PlaneGeometry(H * 2 + 40, H * 2 + 40), MAT.asphalt, scene, false, true);
-  lot2.rotation.x = -Math.PI / 2; lot2.position.y = -0.02;
+  lot2.rotation.x = -Math.PI / 2; lot2.position.y = -0.02; lot2.userData.floor = true;
 
   // perimeter walls with generated graffiti
   const graffiti = [101, 202, 303, 404, 505, 606, 707].map(graffitiTexture);
@@ -441,7 +454,7 @@ function buildScenery() {
   const sk = skylineTexture(); sk.wrapS = THREE.RepeatWrapping; sk.repeat.set(5, 1);
   const ring = new THREE.Mesh(new THREE.CylinderGeometry(300, 300, 34, 64, 1, true),
     new THREE.MeshBasicMaterial({ map: sk, transparent: true, opacity: 0.9, side: THREE.BackSide, fog: false, depthWrite: false }));
-  ring.position.y = 14; scene.add(ring);
+  ring.position.y = 14; ring.userData.skip = true; scene.add(ring);
   // palms outside the walls
   const frond = new THREE.MeshStandardMaterial({ map: frondTexture(), transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.9 });
   const trunk = new THREE.MeshStandardMaterial({ color: '#6b4b38', roughness: 1 });
@@ -451,7 +464,7 @@ function buildScenery() {
     const side = i % 4, t = (rand() * 2 - 1) * (H + 10), off = H + 5 + rand() * 14;
     spots.push([[t, -off], [off, t], [t, off], [-off, t]][side]);
   }
-  for (const [x, z] of spots) {
+  for (const [x, z] of LOW ? [] : spots) {
     const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g);
     const h = 9 + rand() * 7, lean = (rand() - 0.5) * 0.25;
     let y = 0, px = 0;

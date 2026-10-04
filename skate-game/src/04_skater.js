@@ -43,7 +43,7 @@ function createSkater() {
     deckSide: new THREE.MeshStandardMaterial({ color: '#e0b27a', roughness: 0.7 }),
   };
   const mk = (geo, mat, parent) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = false; parent.add(m); return m; };
-  const cap = (r, len) => new THREE.CapsuleGeometry(r, len, 4, 10).translate(0, -len / 2 - r * 0.2, 0);
+  const cap = (r, len) => new THREE.CapsuleGeometry(r, len, LOW ? 2 : 4, LOW ? 6 : 10).translate(0, -len / 2 - r * 0.2, 0);
 
   const root = new THREE.Group(); scene.add(root);
   const lean = new THREE.Group(); root.add(lean);
@@ -55,7 +55,7 @@ function createSkater() {
   const bw = 0.105, bl = 0.4, rr = 0.1;
   deckShape.moveTo(-bw, -bl + rr); deckShape.lineTo(-bw, bl - rr); deckShape.quadraticCurveTo(-bw, bl, 0, bl); deckShape.quadraticCurveTo(bw, bl, bw, bl - rr);
   deckShape.lineTo(bw, -bl + rr); deckShape.quadraticCurveTo(bw, -bl, 0, -bl); deckShape.quadraticCurveTo(-bw, -bl, -bw, -bl + rr);
-  const deckGeo = new THREE.ExtrudeGeometry(deckShape, { depth: 0.014, bevelEnabled: false, curveSegments: 8 });
+  const deckGeo = new THREE.ExtrudeGeometry(deckShape, { depth: 0.014, bevelEnabled: false, curveSegments: LOW ? 3 : 8 });
   deckGeo.rotateX(Math.PI / 2); // shape y -> -z; extrude z -> y (downwards)
   const pa = deckGeo.attributes.position;
   for (let i = 0; i < pa.count; i++) {
@@ -73,7 +73,7 @@ function createSkater() {
     const hanger = mk(new THREE.CylinderGeometry(0.012, 0.016, 0.17, 8), C.truck, boardPivot); hanger.rotation.z = Math.PI / 2; hanger.position.set(0, 0.03 - 0.075 + 0.005, tz);
     const king = mk(new THREE.BoxGeometry(0.03, 0.05, 0.03), C.truck, boardPivot); king.position.set(0, 0.06 - 0.075, tz);
     for (const wx of [-0.09, 0.09]) {
-      const w = mk(new THREE.CylinderGeometry(0.027, 0.027, 0.032, 14), C.wheel, boardPivot);
+      const w = mk(new THREE.CylinderGeometry(0.027, 0.027, 0.032, LOW ? 6 : 14), C.wheel, boardPivot);
       w.rotation.z = Math.PI / 2; w.position.set(wx, 0.027 - 0.075, tz);
     }
   }
@@ -87,7 +87,7 @@ function createSkater() {
   // ---- rider ----
   const rider = new THREE.Group(); rider.rotation.y = -Math.PI / 2; lean.add(rider);
   const pelvis = new THREE.Group(); rider.add(pelvis);
-  mk(new THREE.CapsuleGeometry(0.13, 0.12, 4, 10).rotateZ(Math.PI / 2).scale(1, 1, 0.75), C.pants, pelvis);
+  mk(new THREE.CapsuleGeometry(0.13, 0.12, LOW ? 2 : 4, LOW ? 6 : 10).rotateZ(Math.PI / 2).scale(1, 1, 0.75), C.pants, pelvis);
   const L1 = 0.44, L2 = 0.44;
   const legs = [];
   for (const side of [1, -1]) {
@@ -101,12 +101,12 @@ function createSkater() {
     legs.push({ hip, knee, foot, side });
   }
   const spine = new THREE.Group(); spine.position.y = 0.04; pelvis.add(spine);
-  mk(new THREE.CapsuleGeometry(0.16, 0.3, 4, 12).translate(0, 0.26, 0).scale(1, 1, 0.68), C.shirt, spine);
+  mk(new THREE.CapsuleGeometry(0.16, 0.3, LOW ? 2 : 4, LOW ? 7 : 12).translate(0, 0.26, 0).scale(1, 1, 0.68), C.shirt, spine);
   const neck = new THREE.Group(); neck.position.y = 0.55; spine.add(neck);
   mk(new THREE.CylinderGeometry(0.05, 0.06, 0.08, 8).translate(0, 0.03, 0), C.skin, neck);
   const head = new THREE.Group(); head.position.y = 0.08; neck.add(head);
-  mk(new THREE.SphereGeometry(0.115, 16, 12).scale(0.92, 1.05, 1).translate(0, 0.11, 0.01), C.skin, head);
-  mk(new THREE.SphereGeometry(0.122, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.55).translate(0, 0.13, -0.005), C.beanie, head);
+  mk(new THREE.SphereGeometry(0.115, LOW ? 8 : 16, LOW ? 6 : 12).scale(0.92, 1.05, 1).translate(0, 0.11, 0.01), C.skin, head);
+  mk(new THREE.SphereGeometry(0.122, LOW ? 8 : 16, LOW ? 4 : 10, 0, Math.PI * 2, 0, Math.PI * 0.55).translate(0, 0.13, -0.005), C.beanie, head);
   mk(new THREE.TorusGeometry(0.112, 0.02, 6, 16).rotateX(Math.PI / 2).translate(0, 0.14, -0.005), C.beanie, head);
   mk(new THREE.SphereGeometry(0.035, 8, 6).translate(0, 0.25, -0.01), C.beanie, head);
   mk(new THREE.BoxGeometry(0.2, 0.06, 0.12).translate(0, 0.08, -0.07), C.hair, head);

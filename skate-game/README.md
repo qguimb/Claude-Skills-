@@ -34,4 +34,6 @@ Everything is generated in code. There are no image, model or audio files.
 - **Physics**: a custom arcade controller at 120 Hz: slope gravity, speed-preserving transitions, vert air on the steep quarter pipes, landing checks, grind and manual balance, gaps and combos (`src/05_physics.js`).
 - **Audio**: WebAudio synthesis for rolling, pops, landings, grinds and bails, plus a procedural punk loop (`src/01_core.js`).
 
+If the browser cannot create a WebGL context (GPU blocked or hardware acceleration turned off), the game switches to a low-detail mode drawn on a 2D canvas (`src/05b_softrender.js`): flat-shaded, no textures or shadows, same gameplay. Add `#lowfi` to the URL to force it. On touch screens an on-screen pad and trick buttons appear.
+
 `./build.sh` concatenates `src/` into `index.html` (standalone) and `dist/artifact.html` (the same page without the document skeleton).
