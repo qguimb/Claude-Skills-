@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+// three.js (r159 UMD build) is loaded by a script tag and exposed as window.THREE.
 
 // ---------------------------------------------------------------------------
 // Helpers

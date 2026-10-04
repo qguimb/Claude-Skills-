@@ -134,7 +134,7 @@ const game = {
   onBail() { this.shake(0.5); fx.dustPuff(sk.pos, 1); },
   shake(a) { this.shakeAmt = Math.max(this.shakeAmt, a); },
   start(mode) {
-    audio.init();
+    try { audio.init(); } catch (e) { console.warn('Audio unavailable', e); }
     this.mode = mode; this.state = 'play'; this.score = 0; this.timeLeft = 120; this.done = new Set(); this.bestCombo = 0;
     special = 0;
     for (const l of world.letters) { l.got = false; l.sprite.visible = true; }
@@ -239,7 +239,8 @@ function globalKeys() {
 
 function frame(t) {
   requestAnimationFrame(frame);
-  const dt = Math.min((t - lastT) / 1000, 0.05); lastT = t;
+  // rAF timestamps can precede the performance.now() taken at load, so never let dt go negative
+  const dt = clamp((t - lastT) / 1000, 0, 0.05); lastT = t;
   globalKeys();
   if (game.state === 'play' && !game.freeze) {
     clockNow += dt;
@@ -305,9 +306,11 @@ async function boot() {
   $('btn-menu').onclick = () => game.menu();
   $('btn-run').focus();
   // test hook: advance the simulation deterministically
-  window.__skate = { sk, world, game, combo, input, special: () => special,
+  window.__skateReady = true;
+  window.__skateStatus('');
+  window.__skate = { sk, world, game, combo, input, rig: () => rig, special: () => special,
     step(n) { for (let i = 0; i < n; i++) { clockNow += STEP; handleInput(); physicsStep(STEP); } },
     key(a, down, dir = 'none') { input.held[a] = down; input.queue.push(down ? { a, dir } : { a, up: true }); } };
   requestAnimationFrame(frame);
 }
-boot();
+boot().catch((e) => window.__skateStatus('The game could not start: ' + (e && e.message ? e.message : e) + '. Try reloading the page.', true));

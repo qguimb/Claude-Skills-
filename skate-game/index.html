@@ -90,7 +90,8 @@ body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(
 .ctrls b { color: var(--cream); font-weight: 700; }
 .results { font: 500 18px/1.6 var(--body); }
 .results .big { font: 400 clamp(30px, 6vw, 52px)/1 var(--display); color: var(--sun); margin: 6px 0 10px; font-variant-numeric: tabular-nums; }
-#touch-note { color: var(--hot); }
+#touch-note, #load-status.err { color: var(--hot); }
+#load-status { color: var(--dim); }
 @media (max-width: 640px) { #hud-goals, #hud-keys { display: none; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation-duration: 2.2s; } .panel h1 { transform: none; } }
 </style>
@@ -133,6 +134,7 @@ body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(
       <button class="btn" id="btn-run">2-Minute Run</button>
       <button class="btn alt" id="btn-free">Free Skate</button>
     </div>
+    <p id="load-status">Loading the park…</p>
     <p id="touch-note" hidden>This game needs a keyboard. Plug one in or play on a computer.</p>
     <div class="ctrls">
       <div><b>Arrows / WASD</b><br>push, brake, turn; spin in the air</div>
@@ -169,11 +171,32 @@ body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(
   </div>
 </div>
 
-<script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+<script>
+// Loading feedback: the menu is plain HTML, so say what is happening until the game is ready.
+window.__skateStatus = function (msg, isErr) {
+  var el = document.getElementById('load-status');
+  if (!el) return;
+  el.hidden = !msg; el.textContent = msg || ''; el.classList.toggle('err', !!isErr);
+  if (isErr) window.__skateError = msg;
+};
+window.addEventListener('error', function (e) {
+  if (window.__skateReady) return;
+  var src = e.target && e.target.src;
+  if (src && /three/.test(src)) return; // the CDN fallback below handles this one
+  window.__skateStatus('The game hit an error while loading: ' + (e.message || ('could not load ' + src)) + '. Try reloading the page.', true);
+}, true);
+['btn-run', 'btn-free'].forEach(function (id) {
+  document.getElementById(id).onclick = function () {
+    window.__skateStatus(window.__skateError || 'Still loading the park, one moment…', !!window.__skateError);
+  };
+});
 </script>
-<script type="module">
-import * as THREE from 'three';
+<script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
+<script>
+(function () {
+function main() {
+'use strict';
+// three.js (r159 UMD build) is loaded by a script tag and exposed as window.THREE.
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -1224,10 +1247,10 @@ function createSkater() {
   function boardPoint(obj, out, space) { obj.getWorldPosition(out); return space.worldToLocal(out); }
 
   return {
-    root, lean, boardRoot, boardPivot, rider, pelvis, spine, head, grabPts, footFront, footBack,
+    root, lean, boardRoot, boardPivot, rider, pelvis, spine, head, grabPts, footFront, footBack, arms, P,
     // st: per-frame animation state from the controller
     update(dt, st) {
-      const k = (rate) => 1 - Math.exp(-rate * dt);
+      const k = (rate) => clamp(1 - Math.exp(-rate * dt), 0, 1);
       const T = { hipY: 0.98, tuck: 0, bend: 0.18, twist: 0.25, headYaw: st.fakie ? -1.25 : 1.15, roll: 0, boardPitch: 0, boardYaw: 0, boardLift: 0, footLift: 0, armOut: 0.25 };
       let pushing = false;
       const crouch = Math.max(st.charge || 0, st.landCrouch || 0);
@@ -1948,7 +1971,7 @@ const game = {
   onBail() { this.shake(0.5); fx.dustPuff(sk.pos, 1); },
   shake(a) { this.shakeAmt = Math.max(this.shakeAmt, a); },
   start(mode) {
-    audio.init();
+    try { audio.init(); } catch (e) { console.warn('Audio unavailable', e); }
     this.mode = mode; this.state = 'play'; this.score = 0; this.timeLeft = 120; this.done = new Set(); this.bestCombo = 0;
     special = 0;
     for (const l of world.letters) { l.got = false; l.sprite.visible = true; }
@@ -2053,7 +2076,8 @@ function globalKeys() {
 
 function frame(t) {
   requestAnimationFrame(frame);
-  const dt = Math.min((t - lastT) / 1000, 0.05); lastT = t;
+  // rAF timestamps can precede the performance.now() taken at load, so never let dt go negative
+  const dt = clamp((t - lastT) / 1000, 0, 0.05); lastT = t;
   globalKeys();
   if (game.state === 'play' && !game.freeze) {
     clockNow += dt;
@@ -2119,11 +2143,25 @@ async function boot() {
   $('btn-menu').onclick = () => game.menu();
   $('btn-run').focus();
   // test hook: advance the simulation deterministically
-  window.__skate = { sk, world, game, combo, input, special: () => special,
+  window.__skateReady = true;
+  window.__skateStatus('');
+  window.__skate = { sk, world, game, combo, input, rig: () => rig, special: () => special,
     step(n) { for (let i = 0; i < n; i++) { clockNow += STEP; handleInput(); physicsStep(STEP); } },
     key(a, down, dir = 'none') { input.held[a] = down; input.queue.push(down ? { a, dir } : { a, up: true }); } };
   requestAnimationFrame(frame);
 }
-boot();
+boot().catch((e) => window.__skateStatus('The game could not start: ' + (e && e.message ? e.message : e) + '. Try reloading the page.', true));
+}
+function fail() { window.__skateStatus('Could not download the 3D engine (three.js) from cdn.jsdelivr.net or unpkg.com. Check your connection or ad blocker, then reload the page.', true); }
+function run() { try { main(); } catch (e) { window.__skateStatus('The game could not start: ' + e.message + '. Try reloading the page.', true); console.error(e); } }
+if (window.THREE) run();
+else {
+  var s = document.createElement('script');
+  s.src = 'https://unpkg.com/three@0.159.0/build/three.min.js';
+  s.onload = function () { window.THREE ? run() : fail(); };
+  s.onerror = fail;
+  document.head.appendChild(s);
+}
+})();
 </script>
 </body></html>

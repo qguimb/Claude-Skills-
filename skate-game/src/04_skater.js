@@ -130,10 +130,10 @@ function createSkater() {
   function boardPoint(obj, out, space) { obj.getWorldPosition(out); return space.worldToLocal(out); }
 
   return {
-    root, lean, boardRoot, boardPivot, rider, pelvis, spine, head, grabPts, footFront, footBack,
+    root, lean, boardRoot, boardPivot, rider, pelvis, spine, head, grabPts, footFront, footBack, arms, P,
     // st: per-frame animation state from the controller
     update(dt, st) {
-      const k = (rate) => 1 - Math.exp(-rate * dt);
+      const k = (rate) => clamp(1 - Math.exp(-rate * dt), 0, 1);
       const T = { hipY: 0.98, tuck: 0, bend: 0.18, twist: 0.25, headYaw: st.fakie ? -1.25 : 1.15, roll: 0, boardPitch: 0, boardYaw: 0, boardLift: 0, footLift: 0, armOut: 0.25 };
       let pushing = false;
       const crouch = Math.max(st.charge || 0, st.landCrouch || 0);

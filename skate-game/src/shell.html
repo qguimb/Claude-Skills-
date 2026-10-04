@@ -88,7 +88,8 @@ body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(
 .ctrls b { color: var(--cream); font-weight: 700; }
 .results { font: 500 18px/1.6 var(--body); }
 .results .big { font: 400 clamp(30px, 6vw, 52px)/1 var(--display); color: var(--sun); margin: 6px 0 10px; font-variant-numeric: tabular-nums; }
-#touch-note { color: var(--hot); }
+#touch-note, #load-status.err { color: var(--hot); }
+#load-status { color: var(--dim); }
 @media (max-width: 640px) { #hud-goals, #hud-keys { display: none; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation-duration: 2.2s; } .panel h1 { transform: none; } }
 </style>
@@ -131,6 +132,7 @@ body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(
       <button class="btn" id="btn-run">2-Minute Run</button>
       <button class="btn alt" id="btn-free">Free Skate</button>
     </div>
+    <p id="load-status">Loading the park…</p>
     <p id="touch-note" hidden>This game needs a keyboard. Plug one in or play on a computer.</p>
     <div class="ctrls">
       <div><b>Arrows / WASD</b><br>push, brake, turn; spin in the air</div>
@@ -167,6 +169,24 @@ body { margin: 0; background: var(--ink); color: var(--cream); font-family: var(
   </div>
 </div>
 
-<script type="importmap">
-{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+<script>
+// Loading feedback: the menu is plain HTML, so say what is happening until the game is ready.
+window.__skateStatus = function (msg, isErr) {
+  var el = document.getElementById('load-status');
+  if (!el) return;
+  el.hidden = !msg; el.textContent = msg || ''; el.classList.toggle('err', !!isErr);
+  if (isErr) window.__skateError = msg;
+};
+window.addEventListener('error', function (e) {
+  if (window.__skateReady) return;
+  var src = e.target && e.target.src;
+  if (src && /three/.test(src)) return; // the CDN fallback below handles this one
+  window.__skateStatus('The game hit an error while loading: ' + (e.message || ('could not load ' + src)) + '. Try reloading the page.', true);
+}, true);
+['btn-run', 'btn-free'].forEach(function (id) {
+  document.getElementById(id).onclick = function () {
+    window.__skateStatus(window.__skateError || 'Still loading the park, one moment…', !!window.__skateError);
+  };
+});
 </script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
