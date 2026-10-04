@@ -2,7 +2,7 @@
 
 A small browser skateboarding game in the spirit of the early Tony Hawk's Pro Skater games, with a low chase camera borrowed from Skate 3. One skatepark at sunset, a 2-minute run with goals, or free skate.
 
-Open `index.html` in a desktop browser. It needs a keyboard and an internet connection; three.js loads from jsDelivr and the fonts from Google Fonts.
+Open `index.html` in a browser. Play with a keyboard, or with the on-screen controls on a touch screen. It needs an internet connection: three.js loads from jsDelivr (or unpkg) and the fonts from Google Fonts.
 
 ## Controls
 
@@ -27,7 +27,7 @@ Combos score the sum of the trick points times the number of tricks. Repeating a
 
 Everything is generated in code. There are no image, model or audio files.
 
-- **Rendering**: three.js r170 (ES module from jsDelivr), ACES tone mapping, soft shadow map that follows the skater, sky and sun in a small GLSL shader.
+- **Rendering**: three.js r159 (UMD build from jsDelivr, unpkg as fallback), ACES tone mapping, soft shadow map that follows the skater, sky and sun in a small GLSL shader.
 - **Textures**: canvas-generated concrete, plywood, ramp side panels, graffiti walls, grip tape, board graphic, skyline and palm fronds (`src/02_textures.js`).
 - **Park**: an analytic heightfield built from features (quarter pipes, banks, stairs, blocks, a funbox), each of which also emits its meshes and grind lines (`src/03_world.js`).
 - **Skater**: built from primitives, posed procedurally with two-bone IK so the feet stay on the board and the hands reach the board for grabs (`src/04_skater.js`).
